@@ -4,7 +4,10 @@ package boltbrowser
 // Windows doesn't support process backgrounding like *nix.
 // So we have a separate loop for it.
 
-import "github.com/nsf/termbox-go"
+import (
+	"github.com/boltdb/bolt"
+	"github.com/nsf/termbox-go"
+)
 
 func Browse(db *bolt.DB, readOnly bool) {
 	err := termbox.Init()
@@ -14,11 +17,11 @@ func Browse(db *bolt.DB, readOnly bool) {
 	defer termbox.Close()
 	termbox.SetOutputMode(termbox.Output256)
 
-	memBolt := NewModel(db, readOnly)
-	style := DefaultStyle()
+	memBolt := newModel(db, readOnly)
+	style := defaultStyle()
 
 	screens := defaultScreensForData(memBolt)
-	displayScreen := screens[BrowserScreenIndex]
+	displayScreen := screens[browserScreenIndex]
 	layoutAndDrawScreen(displayScreen, style)
 	for {
 		event := termbox.PollEvent()
