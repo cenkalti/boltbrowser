@@ -1,4 +1,4 @@
-module git.bullercodeworks.com/brian/boltbrowser
+module github.com/cenkalti/boltbrowser
 
 require (
 	github.com/boltdb/bolt v1.3.1
