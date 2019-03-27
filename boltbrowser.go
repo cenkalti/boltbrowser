@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
-	"github.com/br0xen/boltbrowser/boltbrowser"
+	"github.com/cenkalti/boltbrowser/boltbrowser"
 )
 
 var ProgramName = "boltbrowser"
