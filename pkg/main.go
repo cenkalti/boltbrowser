@@ -1,10 +1,8 @@
-package main
+package boltbrowser
 
 import (
-	"errors"
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/nsf/termbox-go"
@@ -22,91 +20,29 @@ var currentFilename string
 
 const DefaultDBOpenTimeout = time.Second
 
-var AppArgs struct {
+var AppArgs Args
+
+type Args struct {
 	DBOpenTimeout time.Duration
 	ReadOnly      bool
 	NoValue       bool
 }
 
-func init() {
-	AppArgs.DBOpenTimeout = DefaultDBOpenTimeout
-	AppArgs.ReadOnly = false
-}
-
-func parseArgs() {
-	var err error
-	if len(os.Args) == 1 {
-		printUsage(nil)
-	}
-	parms := os.Args[1:]
-	for i := range parms {
-		// All 'option' arguments start with "-"
-		if !strings.HasPrefix(parms[i], "-") {
-			databaseFiles = append(databaseFiles, parms[i])
-			continue
-		}
-		if strings.Contains(parms[i], "=") {
-			// Key/Value pair Arguments
-			pts := strings.Split(parms[i], "=")
-			key, val := pts[0], pts[1]
-			switch key {
-			case "-timeout":
-				AppArgs.DBOpenTimeout, err = time.ParseDuration(val)
-				if err != nil {
-					// See if we can successfully parse by adding a 's'
-					AppArgs.DBOpenTimeout, err = time.ParseDuration(val + "s")
-				}
-				// If err is still not nil, print usage
-				if err != nil {
-					printUsage(err)
-				}
-			case "-readonly", "-ro":
-				if val == "true" {
-					AppArgs.ReadOnly = true
-				}
-			case "-no-value":
-				if val == "true" {
-					AppArgs.NoValue = true
-				}
-			case "-help":
-				printUsage(nil)
-			default:
-				printUsage(errors.New("Invalid option"))
-			}
-		} else {
-			// Single-word arguments
-			switch parms[i] {
-			case "-readonly", "-ro":
-				AppArgs.ReadOnly = true
-			case "-no-value":
-				AppArgs.NoValue = true
-			case "-help":
-				printUsage(nil)
-			default:
-				printUsage(errors.New("Invalid option"))
-			}
-		}
+func DefaultArgs() Args {
+	return Args{
+		DBOpenTimeout: DefaultDBOpenTimeout,
 	}
 }
 
-func printUsage(err error) {
+func Main(args Args, files []string) error {
+	// Set the global args.
+	// This is done to convert main package into a library with minimal changes.
+	AppArgs = args
+	databaseFiles = files
+
+	err := termbox.Init()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, err.Error())
-	}
-	fmt.Fprintf(os.Stderr, "Usage: %s [OPTIONS] <filename(s)>\nOptions:\n", ProgramName)
-	fmt.Fprintf(os.Stderr, "  -timeout=duration\n        DB file open timeout (default 1s)\n")
-	fmt.Fprintf(os.Stderr, "  -ro, -readonly   \n        Open the DB in read-only mode\n")
-	fmt.Fprintf(os.Stderr, "  -no-value        \n        Do not display a value in left pane\n")
-}
-
-func main() {
-	var err error
-
-	parseArgs()
-
-	err = termbox.Init()
-	if err != nil {
-		panic(err)
+		return err
 	}
 	defer termbox.Close()
 	style := defaultStyle()
@@ -141,4 +77,6 @@ func main() {
 		mainLoop(memBolt, style)
 		defer db.Close()
 	}
+
+	return nil
 }
